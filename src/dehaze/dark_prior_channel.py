@@ -96,9 +96,28 @@ class DarkPriorChannelDehaze(object):
         raise NotImplementedError(
             "soft_mat is deprecated, guided_filter instead")
 
-    def guided_filter(self, img, img_guide):
+    def guided_filter(self, img, img_guide, epsilon=0.0001):
         """Smooth filter which keep edge property.
         """
+        g_mean = cv2.boxFilter(img_guide, cv2.CV_32F, (self.radius,
+                                                       self.radius))
+        g_corr = cv2.boxFilter(img_guide * img_guide, cv2.CV_32F, (self.radius,
+                                                                   self.radius))
+        i_mean = cv2.boxFilter(img, cv2.CV_32F, (self.radius, self.radius))
+        gi_corr = cv2.boxFilter(img * img_guide, cv2.CV_32F, (self.radius,
+                                                              self.radius))
+
+        g_var = g_corr - g_mean * g_mean
+        gi_cov = gi_corr - i_mean * g_mean
+
+        a = gi_cov / (g_var + epsilon)
+        b = i_mean - a * g_mean
+
+        mean_a = cv2.boxFilter(a, cv2.CV_32F, (self.radius, self.radius))
+        mean_b = cv2.boxFilter(b, cv2.CV_32F, (self.radius, self.radius))
+
+        img = mean_a * img_guide + mean_b
+        img = cv2.max(img, 0.2)
         return img
 
     def reconstruct(self, img, at, t):
@@ -108,14 +127,12 @@ class DarkPriorChannelDehaze(object):
     def __call__(self, img):
         img = img.astype(np.float32)
         img_dark = self.dark_channel(img)
-        #  cv2.imwrite('dark.png', img_dark)
         at = self.atmosphere(img, img_dark)
         t = self.transmission(img, at, img_dark)
-        #  statistic(t)
-        #  cv2.imwrite('t.png', t * 255)
 
         if self.refine:
             img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            t = self.guided_filter(t, img_gray)
+            t = self.guided_filter(t.reshape(img_gray.shape),
+                                   img_gray).reshape(t.shape)
 
         return self.reconstruct(img, at, t)
