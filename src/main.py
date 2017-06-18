@@ -9,9 +9,9 @@ import dehaze
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--input", type=str, required=True, help="index for single input image")
-parser.add_argument("--t_min", type=float, default=0.1, help="minimum transmission rate")
-parser.add_argument("--window", type=int, default=25, help="window size of dark channel")
-parser.add_argument("--radius", type=int, default=50, help="radius of guided filter")
+parser.add_argument("--t_min", type=float, default=0.25, help="minimum transmission rate")
+parser.add_argument("--window", type=int, default=15, help="window size of dark channel")
+parser.add_argument("--radius", type=int, default=80, help="radius of guided filter")
 parser.add_argument("--omega", type=float, default=0.95, help="percantage of haze to be removed")
 parser.add_argument("--refine", type=bool, default=True, help="whether to refine the transmission estimated")
 

@@ -92,7 +92,7 @@ class DarkPriorChannelDehaze(object):
             An `np.ndarray` of size [h, w, 1]
         """
         t = 1.0 - self.omega * self.dark_channel(img / at)
-        return np.maximum(self.t_min, t)
+        return t
 
     def soft_mat(self):
         """Refine the estimated `t` by matting techniques.
@@ -131,7 +131,6 @@ class DarkPriorChannelDehaze(object):
         mean_b = cv2.boxFilter(b, cv2.CV_32F, (self.radius, self.radius))
 
         img = mean_a * img_guide + mean_b
-        img = cv2.max(img, 0.2)
         return img
 
     def reconstruct(self, img, at, t):
@@ -149,4 +148,5 @@ class DarkPriorChannelDehaze(object):
             t = self.guided_filter(t.reshape(img_gray.shape),
                                    img_gray).reshape(t.shape)
 
+        t = np.maximum(self.t_min, t)
         return self.reconstruct(img, at, t)
