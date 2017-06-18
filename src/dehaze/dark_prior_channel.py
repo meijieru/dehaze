@@ -51,7 +51,7 @@ class DarkPriorChannelDehaze(object):
             img (np.ndarray): [h, w, 3] size
 
         Return:
-            An `np.ndarray` of size [h, w]
+            An `np.ndarray` of size [h, w, 1]
         """
         h, w = img.shape[:2]
         img = np.min(img, axis=2, keepdims=False)
@@ -70,7 +70,10 @@ class DarkPriorChannelDehaze(object):
 
         Args:
             img (np.ndarray): [h, w, 3] size
-            img_dark (np.ndarray): dark channel of the img
+            img_dark (np.ndarray): [h, w, 1] size dark channel of the img
+
+        Return:
+            An `np.ndarray` of size [3]
         """
         img = img.reshape([-1, 3])
         img_dark = img_dark.flatten()
@@ -83,7 +86,10 @@ class DarkPriorChannelDehaze(object):
         Args:
             img (np.ndarray): [h, w, 3] size
             at (np.ndarray): [3] size atmosphere
-            img_dark (np.ndarray): dark channel of the img
+            img_dark (np.ndarray): [h, w, 1] size dark channel of the img
+
+        Return:
+            An `np.ndarray` of size [h, w, 1]
         """
         t = 1.0 - self.omega * self.dark_channel(img / at)
         return np.maximum(self.t_min, t)
@@ -98,6 +104,14 @@ class DarkPriorChannelDehaze(object):
 
     def guided_filter(self, img, img_guide, epsilon=0.0001):
         """Smooth filter which keep edge property.
+
+        Args:
+            img (np.ndarray): [h, w] size
+            img_guided (np.ndarray): [h, w] size guide image
+            epsilon (float, optional): avoid `ZeroDivisionError`
+
+        Return:
+            A smoothed version of img, `np.ndarray` of size [h, w, 1]
         """
         g_mean = cv2.boxFilter(img_guide, cv2.CV_32F, (self.radius,
                                                        self.radius))
